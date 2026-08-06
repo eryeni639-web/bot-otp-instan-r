@@ -408,13 +408,7 @@ async def select_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return SELECT_COUNTRY
 
-    if user_session[chat_id]["server"] == 2:
-
-    services = get_services_s2(country_id)
-
-else:
-
-    services = get_services_s5(country_id)
+    service_id = service_cache.get(service_name)
 
     if not service_id:
 
@@ -428,32 +422,64 @@ else:
 
     if user_session[chat_id]["server"] == 2:
 
-    operators = get_operators_s2(
+        operators = get_operators_s2(
+            service_id,
+            user_session[chat_id]["country"]
+        )
+
+        await update.message.reply_text(
+            "📡 Pilih Operator",
+            reply_markup=build_operator_keyboard(operators)
+        )
+
+        return SELECT_OPERATOR
+
+    result = create_order_s5(
         service_id,
         user_session[chat_id]["country"]
     )
 
-    await update.message.reply_text(
-        "📡 Pilih Operator",
-        reply_markup=build_operator_keyboard(operators)
-    )
+    if not result:
 
-    return SELECT_OPERATOR
+        await update.message.reply_text(
+            "❌ Gagal membuat order.",
+            reply_markup=MAIN_MENU
+        )
 
-result = create_order_s5(
-    service_id,
-    user_session[chat_id]["country"]
-)
-
-if not result:
+        return ConversationHandler.END
 
     await update.message.reply_text(
-        "❌ Gagal membuat order.",
-        reply_markup=MAIN_MENU
+        format_order(result)
     )
+
+    order_id = result["data"]["order_id"]
+
+    save_order(order_id, chat_id)
+
+    await update.message.reply_text(
+        "⏳ Menunggu OTP..."
+    )
+
+    otp = wait_otp_server5(order_id)
+
+    if otp:
+
+        await update.message.reply_text(
+            format_otp(otp),
+            reply_markup=MAIN_MENU
+        )
+
+    else:
+
+        await update.message.reply_text(
+            format_error("OTP tidak diterima."),
+            reply_markup=MAIN_MENU
+        )
+
+    delete_order(order_id)
 
     return ConversationHandler.END
-
+    
 await update.message.reply_text(
     format_order(result)
 )
@@ -597,3 +623,85 @@ async def server5(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     return SELECT_COUNTRY
+
+# ==========================================
+# MAIN
+# ==========================================
+
+def main():
+
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Command
+    application.add_handler(
+        CommandHandler(
+            "start",
+            start
+        )
+    )
+
+    # Conversation Server 2 & Server 5
+    conversation = ConversationHandler(
+
+        entry_points=[
+            MessageHandler(
+                filters.Regex("^🖥 Server 2$"),
+                server2
+            ),
+            MessageHandler(
+                filters.Regex("^🖥 Server 5$"),
+                server5
+            ),
+        ],
+
+        states={
+
+            SELECT_COUNTRY: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    select_country
+                )
+            ],
+
+            SELECT_SERVICE: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    select_service
+                )
+            ],
+
+            SELECT_OPERATOR: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    select_operator
+                )
+            ],
+
+        },
+
+        fallbacks=[
+            CommandHandler(
+                "start",
+                start
+            )
+        ],
+
+        allow_reentry=True
+
+    )
+
+    application.add_handler(conversation)
+
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            handle_menu
+        )
+    )
+
+    print("✅ OTPInstan Bot Berjalan...")
+
+    application.run_polling()
+    
+    if __name__ == "__main__":
+    main()
