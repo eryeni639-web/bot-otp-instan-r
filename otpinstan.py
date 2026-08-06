@@ -107,18 +107,19 @@ def resend_otp(order_id):
 # ==========================================================
 
 def get_services_s2(country):
-    """
-    Mengambil daftar layanan Server 2 berdasarkan negara.
-    """
 
     log_info(f"Server 2 - Mengambil layanan negara {country}")
 
-    return api_get(
+    result = api_get(
         "services.php",
         {
             "country": country
         }
     )
+
+    print("SERVICES S2 =", result)
+
+    return result
 
 
 def get_operators_s2(service, country):
@@ -177,18 +178,19 @@ def check_order_s2(order_id):
 # ==========================================================
 
 def get_services_s5(country):
-    """
-    Mengambil daftar layanan Server 5 berdasarkan negara.
-    """
 
     log_info(f"Server 5 - Mengambil layanan negara {country}")
 
-    return api_get(
+    result = api_get(
         "s5/services.php",
         {
             "country": country
         }
     )
+
+    print("SERVICES S5 =", result)
+
+    return result
 
 
 def create_order_s5(service, country):
