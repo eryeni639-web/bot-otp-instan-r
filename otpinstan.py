@@ -116,9 +116,7 @@ def get_services_s2(country):
     )
 
     print("=" * 50)
-    print("COUNTRY =", country)
-    print("TYPE =", type(result))
-    print("RESULT =", result)
+    print(result)
     print("=" * 50)
 
     return result
