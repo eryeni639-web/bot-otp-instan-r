@@ -23,12 +23,14 @@ def api_get(endpoint, params=None):
             params=params,
             timeout=30
         )
-
+        
+        response.raise_for_status()
         return response.json()
 
     except Exception as e:
         log_error(str(e))
         return None
+        
 def api_post(endpoint, data=None):
     try:
         response = requests.post(
@@ -44,7 +46,8 @@ def api_post(endpoint, data=None):
         log_error(str(e))
         return None
 
-    def get_balance():
+
+def get_balance():
     """
     Mengambil saldo akun.
     """
