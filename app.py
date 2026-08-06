@@ -32,29 +32,49 @@ from status_checker import (
     wait_otp_server5
 )
 
-from utils.order_store import save_order
+from utils.order_store import (
+    save_order,
+    get_chat,
+    delete_order
+)
+
+# ==========================================
+# MAIN MENU
+# ==========================================
 
 MAIN_MENU = ReplyKeyboardMarkup(
     [
-        ["💰 Saldo", "🌍 Negara"],
+        ["💰 Saldo", "📜 History"],
         ["🖥 Server 2", "🖥 Server 5"],
-        ["📜 History", "❓ Bantuan"]
+        ["❓ Bantuan"]
     ],
     resize_keyboard=True,
     is_persistent=True
 )
 
-SELECT_SERVER = 1
-SELECT_COUNTRY = 2
-SELECT_SERVICE = 3
-SELECT_OPERATOR = 4
-CREATE_ORDER = 5
-WAIT_OTP = 6
+# ==========================================
+# CONVERSATION STATE
+# ==========================================
+
+SELECT_COUNTRY = 1
+SELECT_SERVICE = 2
+SELECT_OPERATOR = 3
+
+# ==========================================
+# SESSION
+# ==========================================
 
 user_session = {}
+
 country_cache = {}
+
 service_cache = {}
+
 operator_cache = {}
+
+# ==========================================
+# KEYBOARD NEGARA
+# ==========================================
 
 def build_country_keyboard(countries):
 
@@ -68,26 +88,30 @@ def build_country_keyboard(countries):
 
             country_cache[country["name"]] = country["id"]
 
-            keyboard.append([
-                KeyboardButton(country["name"])
-            ])
+            keyboard.append(
+                [KeyboardButton(country["name"])]
+            )
 
     except Exception:
 
-        keyboard.append([
-            KeyboardButton("❌ Data negara tidak tersedia")
-        ])
+        keyboard.append(
+            [KeyboardButton("❌ Data tidak tersedia")]
+        )
 
-    keyboard.append([
-        KeyboardButton("🔙 Kembali")
-    ])
+    keyboard.append(
+        [KeyboardButton("🔙 Kembali")]
+    )
 
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
         is_persistent=True
     )
-    
+
+# ==========================================
+# KEYBOARD LAYANAN
+# ==========================================
+
 def build_service_keyboard(services):
 
     keyboard = []
@@ -100,25 +124,29 @@ def build_service_keyboard(services):
 
             service_cache[service["name"]] = service["id"]
 
-            keyboard.append([
-                KeyboardButton(service["name"])
-            ])
+            keyboard.append(
+                [KeyboardButton(service["name"])]
+            )
 
     except Exception:
 
-        keyboard.append([
-            KeyboardButton("❌ Tidak ada layanan")
-        ])
+        keyboard.append(
+            [KeyboardButton("❌ Tidak ada layanan")]
+        )
 
-    keyboard.append([
-        KeyboardButton("🔙 Kembali")
-    ])
+    keyboard.append(
+        [KeyboardButton("🔙 Kembali")]
+    )
 
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
         is_persistent=True
     )
+
+# ==========================================
+# KEYBOARD OPERATOR
+# ==========================================
 
 def build_operator_keyboard(operators):
 
@@ -132,25 +160,29 @@ def build_operator_keyboard(operators):
 
             operator_cache[operator["name"]] = operator["id"]
 
-            keyboard.append([
-                KeyboardButton(operator["name"])
-            ])
+            keyboard.append(
+                [KeyboardButton(operator["name"])]
+            )
 
     except Exception:
 
-        keyboard.append([
-            KeyboardButton("❌ Tidak ada operator")
-        ])
+        keyboard.append(
+            [KeyboardButton("❌ Tidak ada operator")]
+        )
 
-    keyboard.append([
-        KeyboardButton("🔙 Kembali")
-    ])
+    keyboard.append(
+        [KeyboardButton("🔙 Kembali")]
+    )
 
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
         is_persistent=True
     )
+
+# ==========================================
+# FORMAT ORDER
+# ==========================================
 
 def format_order(result):
 
@@ -159,13 +191,18 @@ def format_order(result):
         data = result["data"]
 
         return (
+            "✅ Order Berhasil Dibuat\n\n"
             f"📞 Nomor : {data['number']}\n"
-            f"🆔 Order : {data['order_id']}"
+            f"🆔 Order ID : {data['order_id']}"
         )
 
     except Exception:
 
         return str(result)
+
+# ==========================================
+# FORMAT OTP
+# ==========================================
 
 def format_otp(result):
 
@@ -174,15 +211,19 @@ def format_otp(result):
         data = result["data"]
 
         return (
-            "✅ OTP Diterima\n\n"
+            "🎉 OTP Berhasil Diterima\n\n"
             f"📩 OTP : {data['otp']}\n"
             f"📞 Nomor : {data['number']}\n"
-            f"🆔 Order : {data['order_id']}"
+            f"🆔 Order ID : {data['order_id']}"
         )
 
     except Exception:
 
         return str(result)
+
+# ==========================================
+# FORMAT ERROR
+# ==========================================
 
 def format_error(message):
 
@@ -191,11 +232,15 @@ def format_error(message):
         f"{message}"
     )
 
+# ==========================================
+# START
+# ==========================================
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
-user_session.pop(chat_id, None)
+    user_session.pop(chat_id, None)
 
     text = (
         "🤖 *OTPInstan Telegram Bot*\n\n"
@@ -209,6 +254,10 @@ user_session.pop(chat_id, None)
         reply_markup=MAIN_MENU
     )
 
+# ==========================================
+# MENU SALDO
+# ==========================================
+
 async def saldo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     result = get_balance()
@@ -218,36 +267,39 @@ async def saldo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=MAIN_MENU
     )
 
-async def negara(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    result = get_countries()
-
-    await update.message.reply_text(
-        str(result),
-        reply_markup=MAIN_MENU
-    )
+# ==========================================
+# MENU HISTORY
+# ==========================================
 
 async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     result = get_history()
 
     await update.message.reply_text(
-        str(result),
+        f"📜 History\n\n{result}",
         reply_markup=MAIN_MENU
     )
+
+# ==========================================
+# MENU BANTUAN
+# ==========================================
 
 async def bantuan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = (
         "📖 Bantuan\n\n"
-        "Gunakan menu yang tersedia.\n"
-        "Server 2 dan Server 5 akan ditambahkan pada langkah berikutnya."
+        "Pilih Server 2 atau Server 5 untuk membuat order OTP.\n\n"
+        "Gunakan menu yang tersedia di keyboard."
     )
 
     await update.message.reply_text(
         text,
         reply_markup=MAIN_MENU
     )
+
+# ==========================================
+# HANDLE MENU
+# ==========================================
 
 async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -256,9 +308,6 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == "💰 Saldo":
         await saldo(update, context)
 
-    elif text == "🌍 Negara":
-        await negara(update, context)
-
     elif text == "📜 History":
         await history(update, context)
 
@@ -266,109 +315,28 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await bantuan(update, context)
 
     elif text == "🖥 Server 2":
-        await update.message.reply_text(
-            "🖥 Menu Server 2 sedang dibuat.",
-            reply_markup=MAIN_MENU
-        )
+        return await server2(update, context)
 
     elif text == "🖥 Server 5":
-        await update.message.reply_text(
-            "🖥 Menu Server 5 sedang dibuat.",
-            reply_markup=MAIN_MENU
-        )
+        return await server5(update, context)
 
-def main():
-
-    app = Application.builder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            handle_menu
-        )
-    )
-
-    print("Bot OTPInstan berjalan...")
-
-    conversation = ConversationHandler(
-    entry_points=[
-        MessageHandler(filters.Regex("^🖥 Server 2$"), server2),
-        MessageHandler(filters.Regex("^🖥 Server 5$"), server5),
-    ],
-    states={
-        SELECT_COUNTRY: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, select_country)
-        ],
-        SELECT_SERVICE: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, select_service)
-        ],
-        SELECT_OPERATOR: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, select_operator)
-        ],
-    },
-    fallbacks=[
-        CommandHandler("start", start)
-    ],
-)
-
-app.add_handler(conversation)
-
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
+# ==========================================
+# SERVER 2
+# ==========================================
 
 async def server2(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
     user_session[chat_id] = {
-        "server":2
+        "server": 2
     }
 
     countries = get_countries()
 
-    if otp:
-
     await update.message.reply_text(
-        format_otp(otp),
-        reply_markup=MAIN_MENU
-    )
-
-else:
-
-    await update.message.reply_text(
-        format_error("OTP tidak diterima."),
-        reply_markup=MAIN_MENU
-    )
-
-    return SELECT_COUNTRY
-
-async def server5(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    chat_id = update.effective_chat.id
-
-    user_session[chat_id] = {
-        "server":5
-    }
-
-    countries = get_countries()
-
-    if otp:
-
-    await update.message.reply_text(
-        format_otp(otp),
-        reply_markup=MAIN_MENU
-    )
-
-else:
-
-    await update.message.reply_text(
-        format_error("OTP tidak diterima."),
-        reply_markup=MAIN_MENU
+        "🌍 Pilih Negara",
+        reply_markup=build_country_keyboard(countries)
     )
 
     return SELECT_COUNTRY
@@ -379,9 +347,23 @@ async def select_country(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     country_name = update.message.text
 
-country_id = country_cache.get(country_name)
+    if country_name == "🔙 Kembali":
 
-user_session[chat_id]["country"] = country_id
+        await start(update, context)
+
+        return ConversationHandler.END
+
+    country_id = country_cache.get(country_name)
+
+    if not country_id:
+
+        await update.message.reply_text(
+            "❌ Negara tidak ditemukan."
+        )
+
+        return SELECT_COUNTRY
+
+    user_session[chat_id]["country"] = country_id
 
     if user_session[chat_id]["server"] == 2:
 
@@ -398,61 +380,72 @@ user_session[chat_id]["country"] = country_id
 
     return SELECT_SERVICE
 
+    user_session[chat_id]["country"] = country_id
+
+    services = get_services_s2(country_id)
+
+    await update.message.reply_text(
+        "📱 Pilih Layanan",
+        reply_markup=build_service_keyboard(services)
+    )
+
+    return SELECT_SERVICE
+
 async def select_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
     service_name = update.message.text
 
-service_id = service_cache.get(service_name)
+    if service_name == "🔙 Kembali":
 
-user_session[chat_id]["service"] = service_id
+        countries = get_countries()
+
+        await update.message.reply_text(
+            "🌍 Pilih Negara",
+            reply_markup=build_country_keyboard(countries)
+        )
+
+        return SELECT_COUNTRY
 
     if user_session[chat_id]["server"] == 2:
 
-        operators = get_operators_s2(
-            service,
-            user_session[chat_id]["country"]
-        )
+    services = get_services_s2(country_id)
+
+else:
+
+    services = get_services_s5(country_id)
+
+    if not service_id:
 
         await update.message.reply_text(
-            "📡 Pilih Operator",
-            reply_markup=build_operator_keyboard(operators)
+            "❌ Layanan tidak ditemukan."
         )
 
-        return SELECT_OPERATOR
+        return SELECT_SERVICE
 
-    result = create_order_s5(
-    user_session[chat_id]["service"],
+    user_session[chat_id]["service"] = service_id
+
+    if user_session[chat_id]["server"] == 2:
+
+    operators = get_operators_s2(
+        service_id,
+        user_session[chat_id]["country"]
+    )
+
+    await update.message.reply_text(
+        "📡 Pilih Operator",
+        reply_markup=build_operator_keyboard(operators)
+    )
+
+    return SELECT_OPERATOR
+
+result = create_order_s5(
+    service_id,
     user_session[chat_id]["country"]
 )
 
-    if result:
-
-    await update.message.reply_text(
-        "✅ Order berhasil dibuat\n\n"
-        + format_order(result)
-    )
-
-    order_id = result["data"]["order_id"]
-
-        
-save_order(
-    order_id,
-    chat_id
-)
-    await update.message.reply_text(
-        "⏳ Menunggu OTP..."
-    )
-
-    otp = wait_otp_server5(order_id)
-
-    await update.message.reply_text(
-        str(otp),
-        reply_markup=MAIN_MENU
-    )
-
-else:
+if not result:
 
     await update.message.reply_text(
         "❌ Gagal membuat order.",
@@ -460,6 +453,48 @@ else:
     )
 
     return ConversationHandler.END
+
+await update.message.reply_text(
+    format_order(result)
+)
+
+order_id = result["data"]["order_id"]
+
+save_order(
+    order_id,
+    chat_id
+)
+
+await update.message.reply_text(
+    "⏳ Menunggu OTP..."
+)
+
+otp = wait_otp_server5(order_id)
+
+if otp:
+
+    await update.message.reply_text(
+        format_otp(otp),
+        reply_markup=MAIN_MENU
+    )
+
+else:
+
+    await update.message.reply_text(
+        format_error("OTP tidak diterima."),
+        reply_markup=MAIN_MENU
+    )
+
+delete_order(order_id)
+
+return ConversationHandler.END
+
+    await update.message.reply_text(
+        "📡 Pilih Operator",
+        reply_markup=build_operator_keyboard(operators)
+    )
+
+    return SELECT_OPERATOR
 
 async def select_operator(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -467,18 +502,56 @@ async def select_operator(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     operator_name = update.message.text
 
-operator_id = operator_cache.get(operator_name)
+    if operator_name == "🔙 Kembali":
 
-user_session[chat_id]["operator"] = operator_id
+        services = get_services_s2(
+            user_session[chat_id]["country"]
+        )
 
-    if result:
+        await update.message.reply_text(
+            "📱 Pilih Layanan",
+            reply_markup=build_service_keyboard(services)
+        )
+
+        return SELECT_SERVICE
+
+    operator_id = operator_cache.get(operator_name)
+
+    if not operator_id:
+
+        await update.message.reply_text(
+            "❌ Operator tidak ditemukan."
+        )
+
+        return SELECT_OPERATOR
+
+    user_session[chat_id]["operator"] = operator_id
+
+    result = create_order_s2(
+        user_session[chat_id]["service"],
+        user_session[chat_id]["country"],
+        operator_id
+    )
+
+    if not result:
+
+        await update.message.reply_text(
+            "❌ Gagal membuat order.",
+            reply_markup=MAIN_MENU
+        )
+
+        return ConversationHandler.END
 
     await update.message.reply_text(
-        "✅ Order berhasil dibuat\n\n"
-        + format_order(result)
+        format_order(result)
     )
 
     order_id = result["data"]["order_id"]
+
+    save_order(
+        order_id,
+        chat_id
+    )
 
     await update.message.reply_text(
         "⏳ Menunggu OTP..."
@@ -486,16 +559,41 @@ user_session[chat_id]["operator"] = operator_id
 
     otp = wait_otp_server2(order_id)
 
-    await update.message.reply_text(
-        str(otp),
-        reply_markup=MAIN_MENU
-    )
+    if otp:
 
-else:
+        await update.message.reply_text(
+            format_otp(otp),
+            reply_markup=MAIN_MENU
+        )
 
-    await update.message.reply_text(
-        "❌ Gagal membuat order.",
-        reply_markup=MAIN_MENU
-    )
+    else:
+
+        await update.message.reply_text(
+            format_error("OTP tidak diterima."),
+            reply_markup=MAIN_MENU
+        )
+
+    delete_order(order_id)
 
     return ConversationHandler.END
+
+# ==========================================
+# SERVER 5
+# ==========================================
+
+async def server5(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    chat_id = update.effective_chat.id
+
+    user_session[chat_id] = {
+        "server": 5
+    }
+
+    countries = get_countries()
+
+    await update.message.reply_text(
+        "🌍 Pilih Negara",
+        reply_markup=build_country_keyboard(countries)
+    )
+
+    return SELECT_COUNTRY
