@@ -615,10 +615,10 @@ def main():
     )
 
     print("✅ OTPInstan Bot Berjalan...")
-
     
+    application.run_polling()
 
-application.run_polling()
+
 
 if __name__ == "__main__":
     main()
