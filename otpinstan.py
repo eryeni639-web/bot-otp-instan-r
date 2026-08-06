@@ -108,8 +108,6 @@ def resend_otp(order_id):
 
 def get_services_s2(country):
 
-    log_info(f"Server 2 - Mengambil layanan negara {country}")
-
     result = api_get(
         "services.php",
         {
@@ -117,7 +115,7 @@ def get_services_s2(country):
         }
     )
 
-    print("SERVICES S2 =", result)
+    print("SERVER2 =", result)
 
     return result
 
