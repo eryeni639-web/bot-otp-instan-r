@@ -380,17 +380,6 @@ async def select_country(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return SELECT_SERVICE
 
-    user_session[chat_id]["country"] = country_id
-
-    services = get_services_s2(country_id)
-
-    await update.message.reply_text(
-        "📱 Pilih Layanan",
-        reply_markup=build_service_keyboard(services)
-    )
-
-    return SELECT_SERVICE
-
 async def select_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
@@ -447,80 +436,6 @@ async def select_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         return ConversationHandler.END
-
-    await update.message.reply_text(
-        format_order(result)
-    )
-
-    order_id = result["data"]["order_id"]
-
-    save_order(order_id, chat_id)
-
-    await update.message.reply_text(
-        "⏳ Menunggu OTP..."
-    )
-
-    otp = wait_otp_server5(order_id)
-
-    if otp:
-
-        await update.message.reply_text(
-            format_otp(otp),
-            reply_markup=MAIN_MENU
-        )
-
-    else:
-
-        await update.message.reply_text(
-            format_error("OTP tidak diterima."),
-            reply_markup=MAIN_MENU
-        )
-
-    delete_order(order_id)
-
-    return ConversationHandler.END
-    
-await update.message.reply_text(
-    format_order(result)
-)
-
-order_id = result["data"]["order_id"]
-
-save_order(
-    order_id,
-    chat_id
-)
-
-await update.message.reply_text(
-    "⏳ Menunggu OTP..."
-)
-
-otp = wait_otp_server5(order_id)
-
-if otp:
-
-    await update.message.reply_text(
-        format_otp(otp),
-        reply_markup=MAIN_MENU
-    )
-
-else:
-
-    await update.message.reply_text(
-        format_error("OTP tidak diterima."),
-        reply_markup=MAIN_MENU
-    )
-
-delete_order(order_id)
-
-return ConversationHandler.END
-
-    await update.message.reply_text(
-        "📡 Pilih Operator",
-        reply_markup=build_operator_keyboard(operators)
-    )
-
-    return SELECT_OPERATOR
 
 async def select_operator(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -701,7 +616,9 @@ def main():
 
     print("✅ OTPInstan Bot Berjalan...")
 
-    application.run_polling()
     
-    if __name__ == "__main__":
+
+application.run_polling()
+
+if __name__ == "__main__":
     main()
