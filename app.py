@@ -368,10 +368,14 @@ async def select_country(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_session[chat_id]["server"] == 2:
 
         services = get_services_s2(country_id)
+        print("COUNTRY ID =", country_id)
+        print("SERVICES =", services)
 
     else:
 
         services = get_services_s5(country_id)
+        print("COUNTRY ID =", country_id)
+        print("SERVICES =", services)
 
     await update.message.reply_text(
         "📱 Pilih Layanan",
